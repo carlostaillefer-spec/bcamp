@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: stg_tpch__orders
+    description: Pedidos limpios. Carga INCREMENTAL por order_date (merge por order_key).
+    columns:
+      - name: order_key
+        data_tests: [unique, not_null]
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__customer')
+                field: customer_key
+      - name: order_status
+        description: "F = completado, O = abierto, P = parcial"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['F', 'O', 'P']
+      - name: order_date
+        data_tests: [not_null]
+
+  - name: stg_tpch__lineitem
+    description: Líneas de pedido limpias. Carga INCREMENTAL por ship_date (merge por order_key + line_number).
+    data_tests:
+      - unique_combination:
+          arguments:
+            combination_of_columns: ['order_key', 'line_number']
+    columns:
+      - name: lineitem_key
+        data_tests: [unique, not_null]
+      - name: order_key
+        data_tests: [not_null]
+      - name: return_flag
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A', 'N', 'R']
+      - name: line_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['F', 'O']
+
+  - name: stg_tpch__customer
+    description: Clientes limpios. Carga total.
+    columns:
+      - name: customer_key
+        data_tests: [unique, not_null]
+      - name: nation_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__nation')
+                field: nation_key
+
+  - name: stg_tpch__part
+    description: Productos limpios. Carga
