@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: fct_sales
+    description: Hechos de ventas a nivel de línea de pedido. Tabla, carga total.
+    columns:
+      - name: lineitem_key
+        data_tests: [unique, not_null]
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_key
+      - name: supplier_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_supplier')
+                field: supplier_key
+      - name: part_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_part')
+                field: part_key
+      - name: order_date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: ship_date_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: net_amount
+        data_tests: [not_null]
+
+  - name: dim_customer
+    description: Dimensión cliente con país y región.
+    columns:
+      - name: customer_key
+        data_tests: [unique, not_null]
+      - name: market_segment
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['AUTOMOBILE', 'BUILDING', 'FURNITURE', 'HOUSEHOLD', 'MACHINERY']
+
+  - name: dim_supplier
+    description: Dimensión proveedor con país y región.
+    columns:
+      - name: supplier_key
+        data_tests: [unique, not_null]
+
+  - name: dim_part
+    description: Dimensión producto.
+    columns:
+      - name: part_key
+        data_tests: [unique, not_null]
+
+  - name: dim_date
+    description: Dimensión calendario 1992-1998 (generada).
+    columns:
+      - name: date_key
+        data_tests: [unique, not_null]
