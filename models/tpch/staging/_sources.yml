@@ -1,0 +1,24 @@
+version: 2
+
+sources:
+  - name: tpch
+    description: Dataset de ejemplo TPC-H (escala 1) que Snowflake incluye en todas las cuentas.
+    database: snowflake_sample_data
+    schema: tpch_sf1
+    tables:
+      - name: customer
+        description: Clientes
+      - name: orders
+        description: Cabeceras de pedido
+      - name: lineitem
+        description: Líneas de pedido (unos 6 millones de filas)
+      - name: part
+        description: Productos / piezas
+      - name: partsupp
+        description: Relación producto-proveedor con coste de suministro
+      - name: supplier
+        description: Proveedores
+      - name: nation
+        description: Países
+      - name: region
+        description: Regiones
