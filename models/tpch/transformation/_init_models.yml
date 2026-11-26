@@ -1,0 +1,69 @@
+version: 2
+
+models:
+  - name: int_customers_enriched
+    description: Clientes con país y región. View, carga total.
+    columns:
+      - name: customer_key
+        data_tests: [unique, not_null]
+
+  - name: int_suppliers_enriched
+    description: Proveedores con país y región. View, carga total.
+    columns:
+      - name: supplier_key
+        data_tests: [unique, not_null]
+
+  - name: int_lineitem_enriched
+    description: >
+      Líneas de pedido combinadas con el pedido y el coste de suministro,
+      con importes neto/bruto, margen y métricas de entrega. View, carga total.
+    columns:
+      - name: lineitem_key
+        data_tests: [unique, not_null]
+
+# ---------------------------------------------------------------------------
+# UNIT TESTS (dbt >= 1.8)
+# Prueban la LÓGICA del modelo con datos inventados, sin depender de los datos reales.
+# Se ejecutan con:  dbt test --select test_type:unit
+# ---------------------------------------------------------------------------
+unit_tests:
+  - name: test_lineitem_amounts_and_margin
+    description: >
+      Comprueba el cálculo de importe neto, bruto, coste de suministro y margen.
+      100 x (1 - 0.10) = 90 neto; 90 x 1.05 = 94.50 bruto; coste 30 x 2 uds = 60; margen 90 - 60 = 30.
+    model: int_lineitem_enriched
+    given:
+      - input: ref('stg_tpch__lineitem')
+        rows:
+          - {lineitem_key: 'k1', order_key: 1, line_number: 1, part_key: 10, supplier_key: 20,
+             quantity: 2, extended_price: 100, discount: 0.10, tax: 0.05,
+             ship_date: '1995-01-05', commit_date: '1995-01-10', receipt_date: '1995-01-08'}
+      - input: ref('stg_tpch__orders')
+        rows:
+          - {order_key: 1, customer_key: 5, order_date: '1995-01-01'}
+      - input: ref('stg_tpch__partsupp')
+        rows:
+          - {part_key: 10, supplier_key: 20, supply_cost: 30}
+    expect:
+      rows:
+        - {lineitem_key: 'k1', net_amount: 90.00, gross_amount: 94.50,
+           total_supply_cost: 60.00, margin: 30.00, days_to_ship: 4, is_late_delivery: false}
+
+  - name: test_late_delivery_flag
+    description: Si la recepción es posterior a la fecha comprometida, is_late_delivery = true.
+    model: int_lineitem_enriched
+    given:
+      - input: ref('stg_tpch__lineitem')
+        rows:
+          - {lineitem_key: 'k2', order_key: 2, line_number: 1, part_key: 10, supplier_key: 20,
+             quantity: 1, extended_price: 50, discount: 0, tax: 0,
+             ship_date: '1996-03-01', commit_date: '1996-03-05', receipt_date: '1996-03-09'}
+      - input: ref('stg_tpch__orders')
+        rows:
+          - {order_key: 2, customer_key: 7, order_date: '1996-02-25'}
+      - input: ref('stg_tpch__partsupp')
+        rows:
+          - {part_key: 10, supplier_key: 20, supply_cost: 10}
+    expect:
+      rows:
+        - {lineitem_key: 'k2', is_late_delivery: true, days_to_ship: 5}
