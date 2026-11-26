@@ -34,11 +34,15 @@ clean-targets:         # directories to be removed by `dbt clean`
 # instead be materialized as tables. Any models you add to the root of the models folder will 
 # continue to be built as views. These settings can be overridden in the individual model files
 # using the `{{ config(...) }}` macro.
-
 models:
-  dbt_fundamentals_on_demand:
-    staging:
-      +materialized: view
-
-    marts:
-      +materialized: table
+  bcamp:
+    tpch:
+      staging:
+        +schema: staging
+        +materialized: table
+      transformation:
+        +schema: transformation
+        +materialized: view
+      business:
+        +schema: business
+        +materialized: table
